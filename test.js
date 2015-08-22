@@ -98,7 +98,7 @@ describe('Obs', function() {
     }, 1)
   })
 
-  it('should remove observee', function(done) {
+  it('should add observee', function(done) {
     var sig = new Var(123)
     var isTracking = new Var(false)
     var obs = new Obs(function() {
@@ -109,9 +109,31 @@ describe('Obs', function() {
 
     setTimeout(function() {
       assert(obs.observees.length === 1)
+      assert(sig.observers.size === 0)
       isTracking.update(true)
       sig.update(456)
       assert(obs.observees.length === 2)
+      assert(sig.observers.size === 1)
+      done()
+    }, 1)
+  })
+
+  it('should remove observee', function(done) {
+    var sig = new Var(123)
+    var isTracking = new Var(true)
+    var obs = new Obs(function() {
+      if (isTracking.apply()) {
+        sig.apply()
+      }
+    })
+
+    setTimeout(function() {
+      assert(obs.observees.length === 2)
+      // assert(sig.observers.size === 1)
+      isTracking.update(false)
+      sig.update(456)
+      assert(obs.observees.length === 1)
+      assert(sig.observers.size === 0)
       done()
     }, 1)
   })
@@ -131,6 +153,10 @@ describe('Obs', function() {
     }, 1)
   })
 
+})
+
+describe('Rx', function() {
+  it('should')
 })
 
 // var a = new Rx(() => b.apply())
