@@ -93,30 +93,42 @@ describe('Obs', function() {
       sig.apply()
     })
     setTimeout(function() {
-      assert(obs.observees.length > 0)
+      assert(obs.observees.length === 1)
       done()
     }, 1)
   })
 
   it('should remove observee', function(done) {
     var sig = new Var(123)
-    var isTracking = false;
+    var isTracking = new Var(false)
     var obs = new Obs(function() {
-      if (isTracking) {
+      if (isTracking.apply()) {
         sig.apply()
       }
     })
 
     setTimeout(function() {
-      assert(obs.observees.length === 0)
-      isTracking = true
+      assert(obs.observees.length === 1)
+      isTracking.update(true)
       sig.update(456)
-      setTimeout(function() {
-        assert(obs.observees.length === 1)
-        done()
-      }, 2)
+      assert(obs.observees.length === 2)
+      done()
     }, 1)
+  })
 
+  it('should get called when update', function(done) {
+    var sig = new Var(123)
+    var count = 0
+    var obs = new Obs(function() {
+      sig.apply()
+      count++
+    })
+    setTimeout(function() {
+      sig.update(456)
+      assert(obs.observees.length === 1)
+      assert(count === 2)
+      done()
+    }, 1)
   })
 
 })
