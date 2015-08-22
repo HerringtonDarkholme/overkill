@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES3",
+    "experimentalDecorators": true
+  },
+  "files": ["ok.ts"]
+}

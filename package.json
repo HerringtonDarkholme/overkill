@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "build": "node node_modules/typescript/bin/tsc",
+    "watch": "node node_modules/typescript/bin/tsc --watch",
+    "test": "node node_modules/mocha/bin/mocha"
+  },
+  "dependencies": {
+    "es6-collections": "^0.5.4"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "typescript": "^1.6.0-dev.20150822"
+  }
+}
