@@ -141,6 +141,20 @@ describe('Obs', function() {
 })
 
 describe('Rx', function() {
+
+  it('should return value', function() {
+    var a = new Rx(function() {return 123})
+    assert(a.apply() === 123)
+  })
+
+  it('should update value', function() {
+    var a = new Var(123)
+    var b = new Rx(function() {return a.apply()})
+    assert(b.apply() === 123)
+    a.update(456)
+    assert(b.apply() === 456)
+  })
+
   it('should propagate', function() {
     var calledTimes = 0
     var a = new Var(123)
@@ -154,6 +168,37 @@ describe('Rx', function() {
     a.update(456)
     assert(calledTimes === 2)
   })
+
+  it('should repropagate', function() {
+    var isTracking = new Var(false)
+    var count = new Var(123)
+    var rx = new Rx(function() {
+      if (isTracking.apply()) {
+        return count.apply()
+      }
+      return 456
+    })
+    assert(rx.apply() === 456)
+    count.update(789)
+    assert(rx.apply() === 456)
+    isTracking.update(true)
+    assert(rx.apply() === 789)
+  })
+
+  it('should nest', function() {
+    var root = new Var(123)
+    var node = new Rx(function() {
+      return root.apply()
+    })
+    var leaf = new Rx(function() {
+      return node.apply()
+    })
+    assert(leaf.apply() === root.apply())
+    root.update(456)
+    assert(leaf.apply() === root.apply())
+  })
+
+
 })
 
 // var a = new Rx(() => b.apply())
