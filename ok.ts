@@ -31,14 +31,11 @@ abstract class Signal<T> {
 // a flag indicates whether to track dependency
 // true when observer calls observee, otherwise false
 var inWatch = false
-export function startObserve(fn: Function) {
-  setImmediate(() => {
-    inWatch = true
-    fn()
-    inWatch = false
-  })
+export function mockInWatch(fn: Function) {
+  inWatch = true
+  fn()
+  inWatch = false
 }
-
 /*
  * In dependency graph, we have three kinds of node
  * Var: the root of graph, the source of change. observed by Rx/Obs
@@ -99,7 +96,9 @@ export class Obs extends Signal<void> {
   constructor(expr: () => void) {
     super()
     this.expr = expr
-    startObserve(() => this.computeValue())
+    inWatch = true
+    this.computeValue()
+    inWatch = false
   }
   computeValue() {
     for (let sig of this.observees) {
@@ -113,6 +112,7 @@ export class Obs extends Signal<void> {
   }
 }
 
+const UNINTIALIZE: any = {}
 export class Rx<T> extends Signal<T> {
   private observers = new Set<Observer>()
   private observees: Array<Observee> = []
@@ -120,7 +120,7 @@ export class Rx<T> extends Signal<T> {
   constructor(expr: () => T) {
     super()
     this.expr = expr
-    startObserve(() => this.computeValue())
+    this.value = UNINTIALIZE
   }
   computeValue() {
     for (let sig of this.observees) {
@@ -136,6 +136,11 @@ export class Rx<T> extends Signal<T> {
     }
   }
   apply(): T {
+    if (this.value === UNINTIALIZE) {
+      inWatch = true
+      this.computeValue()
+      inWatch = false
+    }
     if (inWatch) {
       let callSig = caller.value()
       this.observers.add(callSig)
@@ -167,4 +172,9 @@ export class Rx<T> extends Signal<T> {
   }
 }
 
-export var caller = new Caller<Observer>(new Obs(function(){}))
+var nilSig: any = {
+  watch() {}
+}
+var caller = new Caller<Observer>(nilSig)
+
+export var _caller = caller

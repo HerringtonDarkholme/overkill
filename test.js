@@ -5,8 +5,8 @@ var ok = require('./ok')
 var Rx = ok.Rx
 var Obs = ok.Obs
 var Var = ok.Var
-var caller = ok.caller
-var startObserve = ok.startObserve
+var caller = ok._caller
+var mockInWatch = ok.mockInWatch
 
 describe('Var', function() {
   var CONST1 = 42
@@ -30,84 +30,78 @@ describe('Var', function() {
     computeValue: function() {
       this.getCalledTimes++
     },
-    mockLink: function(obs, cb) {
-      startObserve(function() {
+    mockLink: function(obs) {
+      mockInWatch(function() {
         caller.withValue(mockObserver)(function() {
           obs.apply()
         })
-        cb()
       })
     }
   }
 
-  it('should link observer', function(done) {
+  it('should link observer', function() {
     var a = new Var(CONST1)
     mockObserver.getCalledTimes = 0
     mockObserver.observee = null
-    mockObserver.mockLink(a, function() {
-      assert(mockObserver.observee === a)
-      done()
-    })
-  })
-  it('should call observer when changes', function(done) {
-    var a = new Var(CONST1)
-    mockObserver.getCalledTimes = 0
-    mockObserver.observee = null
-    mockObserver.mockLink(a, function() {
-      a.update(CONST2)
-      assert(a.apply() === CONST2)
-      assert(mockObserver.getCalledTimes === 1)
-      done()
-    })
+    mockObserver.mockLink(a)
+    assert(mockObserver.observee === a)
   })
 
-  it('should not call observer when no changes', function(done) {
-    var a = new Var(CONST1)
-    mockObserver.getCalledTimes = 0
-    mockObserver.observee = null
-    mockObserver.mockLink(a, function() {
-      a.update(CONST1)
-      assert(a.apply() === CONST1)
-      assert(mockObserver.getCalledTimes === 0)
-      done()
-    })
-  })
+it('should call observer when changes', function() {
+  var a = new Var(CONST1)
+  mockObserver.getCalledTimes = 0
+  mockObserver.observee = null
+  mockObserver.mockLink(a)
+  a.update(CONST2)
+  assert(a.apply() === CONST2)
+  assert(mockObserver.getCalledTimes === 1)
+})
+
+it('should not call observer when no changes', function() {
+  var a = new Var(CONST1)
+  mockObserver.getCalledTimes = 0
+  mockObserver.observee = null
+  mockObserver.mockLink(a)
+  a.update(CONST1)
+  assert(a.apply() === CONST1)
+  assert(mockObserver.getCalledTimes === 0)
+})
 })
 
 describe('Obs', function() {
-  it('should make side effect', function(done) {
-    var sideEffectDone = false
-    var obs = new Obs(function() {
-      sideEffectDone = true
-    })
-    setTimeout(function() {
-      assert(sideEffectDone)
-      obs = null
-      done()
-    }, 1)
+it('should make side effect', function(done) {
+  var sideEffectDone = false
+  var obs = new Obs(function() {
+    sideEffectDone = true
   })
+  setTimeout(function() {
+    assert(sideEffectDone)
+    obs = null
+    done()
+  }, 1)
+})
 
-  it('should has observee', function(done) {
-    var sig = new Var(123)
-    var obs = new Obs(function() {
+it('should has observee', function(done) {
+  var sig = new Var(123)
+  var obs = new Obs(function() {
+    sig.apply()
+  })
+  setTimeout(function() {
+    assert(obs.observees.length === 1)
+    done()
+  }, 1)
+})
+
+it('should add observee', function(done) {
+  var sig = new Var(123)
+  var isTracking = new Var(false)
+  var obs = new Obs(function() {
+    if (isTracking.apply()) {
       sig.apply()
-    })
-    setTimeout(function() {
-      assert(obs.observees.length === 1)
-      done()
-    }, 1)
+    }
   })
 
-  it('should add observee', function(done) {
-    var sig = new Var(123)
-    var isTracking = new Var(false)
-    var obs = new Obs(function() {
-      if (isTracking.apply()) {
-        sig.apply()
-      }
-    })
-
-    setTimeout(function() {
+  setTimeout(function() {
       assert(obs.observees.length === 1)
       assert(sig.observers.size === 0)
       isTracking.update(true)
@@ -129,7 +123,7 @@ describe('Obs', function() {
 
     setTimeout(function() {
       assert(obs.observees.length === 2)
-      // assert(sig.observers.size === 1)
+      assert(sig.observers.size === 1)
       isTracking.update(false)
       sig.update(456)
       assert(obs.observees.length === 1)
@@ -156,7 +150,19 @@ describe('Obs', function() {
 })
 
 describe('Rx', function() {
-  it('should')
+  it('should propagate', function() {
+    var calledTimes = 0
+    var a = new Var(123)
+    var b = new Rx(function() {
+      return a.apply() + 123
+    })
+    var c = new Obs(function() {
+      b.apply()
+      calledTimes++
+    })
+    a.update(456)
+    assert(calledTimes === 2)
+  })
 })
 
 // var a = new Rx(() => b.apply())

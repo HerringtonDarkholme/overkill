@@ -33,14 +33,12 @@ var Signal = (function () {
 // a flag indicates whether to track dependency
 // true when observer calls observee, otherwise false
 var inWatch = false;
-function startObserve(fn) {
-    setImmediate(function () {
-        inWatch = true;
-        fn();
-        inWatch = false;
-    });
+function mockInWatch(fn) {
+    inWatch = true;
+    fn();
+    inWatch = false;
 }
-exports.startObserve = startObserve;
+exports.mockInWatch = mockInWatch;
 /*
  * In dependency graph, we have three kinds of node
  * Var: the root of graph, the source of change. observed by Rx/Obs
@@ -70,7 +68,7 @@ var Var = (function (_super) {
     // so we register dependency when observee get called
     Var.prototype.apply = function () {
         if (inWatch) {
-            var callSig = exports.caller.value();
+            var callSig = caller.value();
             callSig.watch(this);
             this.observers.add(callSig);
         }
@@ -96,11 +94,12 @@ exports.Var = Var;
 var Obs = (function (_super) {
     __extends(Obs, _super);
     function Obs(expr) {
-        var _this = this;
         _super.call(this);
         this.observees = [];
         this.expr = expr;
-        startObserve(function () { return _this.computeValue(); });
+        inWatch = true;
+        this.computeValue();
+        inWatch = false;
     }
     Obs.prototype.computeValue = function () {
         for (var _i = 0, _a = this.observees; _i < _a.length; _i++) {
@@ -108,7 +107,7 @@ var Obs = (function (_super) {
             sig.retireFrom(this);
         }
         this.observees = [];
-        exports.caller.withValue(this)(this.expr);
+        caller.withValue(this)(this.expr);
     };
     Obs.prototype.watch = function (child) {
         this.observees.push(child);
@@ -116,15 +115,15 @@ var Obs = (function (_super) {
     return Obs;
 })(Signal);
 exports.Obs = Obs;
+var UNINTIALIZE = {};
 var Rx = (function (_super) {
     __extends(Rx, _super);
     function Rx(expr) {
-        var _this = this;
         _super.call(this);
         this.observers = new Set();
         this.observees = [];
         this.expr = expr;
-        startObserve(function () { return _this.computeValue(); });
+        this.value = UNINTIALIZE;
     }
     Rx.prototype.computeValue = function () {
         for (var _i = 0, _a = this.observees; _i < _a.length; _i++) {
@@ -132,7 +131,7 @@ var Rx = (function (_super) {
             sig.retireFrom(this);
         }
         this.observees = [];
-        var newValue = exports.caller.withValue(this)(this.expr);
+        var newValue = caller.withValue(this)(this.expr);
         if (this.value !== newValue) {
             this.value = newValue;
             var obs = this.observers;
@@ -141,8 +140,13 @@ var Rx = (function (_super) {
         }
     };
     Rx.prototype.apply = function () {
+        if (this.value === UNINTIALIZE) {
+            inWatch = true;
+            this.computeValue();
+            inWatch = false;
+        }
         if (inWatch) {
-            var callSig = exports.caller.value();
+            var callSig = caller.value();
             this.observers.add(callSig);
             callSig.watch(this);
         }
@@ -171,4 +175,8 @@ var Rx = (function (_super) {
     return Rx;
 })(Signal);
 exports.Rx = Rx;
-exports.caller = new Caller(new Obs(function () { }));
+var nilSig = {
+    watch: function () { }
+};
+var caller = new Caller(nilSig);
+exports._caller = caller;
