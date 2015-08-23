@@ -69,47 +69,38 @@ it('should not call observer when no changes', function() {
 })
 
 describe('Obs', function() {
-it('should make side effect', function(done) {
-  var sideEffectDone = false
-  var obs = new Obs(function() {
-    sideEffectDone = true
-  })
-  setTimeout(function() {
+  it('should make side effect', function() {
+    var sideEffectDone = false
+    var obs = new Obs(function() {
+      sideEffectDone = true
+    })
     assert(sideEffectDone)
     obs = null
-    done()
-  }, 1)
-})
-
-it('should has observee', function(done) {
-  var sig = new Var(123)
-  var obs = new Obs(function() {
-    sig.apply()
   })
-  setTimeout(function() {
-    assert(obs.observees.length === 1)
-    done()
-  }, 1)
-})
 
-it('should add observee', function(done) {
-  var sig = new Var(123)
-  var isTracking = new Var(false)
-  var obs = new Obs(function() {
-    if (isTracking.apply()) {
+  it('should has observee', function() {
+    var sig = new Var(123)
+    var obs = new Obs(function() {
       sig.apply()
-    }
+    })
+    assert(obs.observees[0] === sig)
+    assert(sig.observers.has(obs))
   })
 
-  setTimeout(function() {
-      assert(obs.observees.length === 1)
-      assert(sig.observers.size === 0)
-      isTracking.update(true)
-      sig.update(456)
-      assert(obs.observees.length === 2)
-      assert(sig.observers.size === 1)
-      done()
-    }, 1)
+  it('should add observee', function() {
+    var sig = new Var(123)
+    var isTracking = new Var(false)
+    var obs = new Obs(function() {
+      if (isTracking.apply()) {
+        sig.apply()
+      }
+    })
+    assert(obs.observees.length === 1)
+    assert(sig.observers.size === 0)
+    isTracking.update(true)
+    sig.update(456)
+    assert(obs.observees.length === 2)
+    assert(sig.observers.size === 1)
   })
 
   it('should remove observee', function(done) {

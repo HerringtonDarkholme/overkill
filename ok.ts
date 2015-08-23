@@ -137,9 +137,12 @@ export class Rx<T> extends Signal<T> {
   }
   apply(): T {
     if (this.value === UNINTIALIZE) {
-      inWatch = true
       this.computeValue()
-      inWatch = false
+      if (!inWatch) {
+        let ret = this.value
+        this.value = UNINTIALIZE
+        return ret
+      }
     }
     if (inWatch) {
       let callSig = caller.value()
