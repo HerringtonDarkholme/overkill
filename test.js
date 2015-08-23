@@ -138,6 +138,15 @@ describe('Obs', function() {
     }, 1)
   })
 
+  it('should work with exception', function() {
+    assert.throws(function() {
+      var naughty = new Obs(function() {
+        throw "anything"
+      })
+    })
+    assert(caller.callers.length === 1)
+  })
+
 })
 
 describe('Rx', function() {
@@ -198,6 +207,15 @@ describe('Rx', function() {
     assert(leaf.apply() === root.apply())
   })
 
+  it('should work with exception', function() {
+    assert.throws(function() {
+      var naughty = new Rx(function() {
+        throw "anything"
+      })
+      naughty.apply()
+    })
+    assert(caller.callers.length === 1)
+  })
 
 })
 

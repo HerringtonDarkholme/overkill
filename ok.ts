@@ -9,9 +9,12 @@ class Caller<T> {
   withValue(t: T): Function {
     return (fn: Function) => {
       this.callers.push(t)
-      let ret = fn()
-      this.callers.pop()
-      return ret
+      try {
+        let ret = fn()
+        return ret
+      } finally {
+        this.callers.pop()
+      }
     }
   }
   value() {
