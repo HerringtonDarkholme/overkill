@@ -189,47 +189,47 @@ var caller = new Caller<Observer>(nilSig)
 
 export var _caller = caller
 
-// export enum UpdatePolicy {
-//   FORCE, BY_REFERENCE
-// }
+export enum UpdatePolicy {
+  FORCE, BY_REFERENCE
+}
 
-// interface Var<T> {
-//   (): T
-//   (t: T): void
-//   (t: T, byRef: UpdatePolicy): void
-//   (fn: (t: T) => boolean, byRef: UpdatePolicy): void
-// }
-// var funcMap = new WeakMap<Function, Signal<_>>()
+interface Var<T> {
+  (): T
+  (t: T): void
+  (t: T, byRef: UpdatePolicy): void
+  (fn: (t: T) => boolean, byRef: UpdatePolicy): void
+}
+var funcMap = new WeakMap<Function, Signal<_>>()
 
-// export function Var<T>(initialValue: T): Var<T> {
-//   var vImp = new VarImp(initialValue)
-//   var func = (t?: any, policy?: UpdatePolicy) => {
-//     switch (policy) {
-//     case UpdatePolicy.FORCE:
-//       vImp.update(t, true)
-//       break;
-//     case UpdatePolicy.BY_REFERENCE:
-//       if (typeof t !== 'function') {
-//         throw new Error('updateRef should use function')
-//       }
-//       vImp.updateRef(t)
-//       break
-//     default:
-//       if (t === undefined)  {
-//         return vImp.apply()
-//       } else {
-//         vImp.update(t)
-//       }
-//       break
-//     }
-//   }
-//   funcMap.set(func, vImp)
-//   return func
-// }
+export function Var<T>(initialValue: T): Var<T> {
+  var vImp = new VarImp(initialValue)
+  var func = (t?: any, policy?: UpdatePolicy) => {
+    switch (policy) {
+    case UpdatePolicy.FORCE:
+      vImp.update(t, true)
+      break;
+    case UpdatePolicy.BY_REFERENCE:
+      if (typeof t !== 'function') {
+        throw new Error('updateRef should use function')
+      }
+      vImp.updateRef(t)
+      break
+    default:
+      if (t === undefined)  {
+        return vImp.apply()
+      } else {
+        vImp.update(t)
+      }
+      break
+    }
+  }
+  funcMap.set(func, vImp)
+  return func
+}
 
-// interface Rx<T> {
-//   (): T
-// }
-// export function Rx<T, C>(fn: (c: C) => T): Rx<T> {
-//   var rxImp = new RxImp(fn)
-// }
+interface Rx<T> {
+  (): T
+}
+export function Rx<T, C>(fn: (c: C) => T): Rx<T> {
+  var rxImp = new RxImp(fn)
+}
