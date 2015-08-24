@@ -7,6 +7,7 @@ class Caller<T> {
     if (init !== undefined) this.callers.push(init)
   }
   withValue(t: T): Function {
+    if (this.callers.indexOf(t) >= 0) throw new Error('cyclic')
     return (fn: Function) => {
       this.callers.push(t)
       try {
@@ -166,9 +167,6 @@ export class Rx<T> extends Signal<T> {
   }
   watch(child: Observee) {
     // only interior node will form cycle
-    if (child instanceof Rx) {
-      this.assertNoCyclic(child)
-    }
     this.observees.push(child)
   }
 
@@ -176,16 +174,6 @@ export class Rx<T> extends Signal<T> {
     this.observers.delete(obs)
   }
 
-  assertNoCyclic(child: Rx<_>) {
-    if (this.observers.has(child)) {
-      throw new Error('cyclic error')
-    }
-    this.observers.forEach(p => {
-      if (p instanceof Rx) {
-        p.assertNoCyclic(child)
-      }
-    })
-  }
 }
 
 var nilSig: any = {

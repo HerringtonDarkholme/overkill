@@ -235,9 +235,37 @@ describe('Rx', function() {
   it('should work with exception', function() {
     assert.throws(function() {
       var naughty = new Rx(function() {
-        throw "anything"
+        throw 'anything'
       })
       naughty.apply()
+    })
+    assert(caller.callers.length === 1)
+  })
+
+  it('should report cyclic', function() {
+    assert.throws(function() {
+      var a = new Rx(function() {
+        return c.apply()
+      })
+      var c = new Rx(function() {
+        return a.apply()
+      })
+      c.apply()
+    })
+    assert(caller.callers.length === 1)
+  })
+
+  it('should report by obs', function() {
+    assert.throws(function() {
+      var a = new Rx(function() {
+        return c.apply()
+      })
+      var c = new Rx(function() {
+        return a.apply()
+      })
+      new Obs(function() {
+        c.apply()
+      })
     })
     assert(caller.callers.length === 1)
   })
