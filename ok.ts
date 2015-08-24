@@ -87,6 +87,16 @@ export class Var<T> extends Signal<T> {
       inWatch = false
     }
   }
+  updateRef(func: (t: T) => boolean|void) {
+    let skipUpdate = func(this.value)
+    if (skipUpdate !== true) {
+      inWatch = true
+      var obs = this.observers
+      this.observers = new Set<any>()
+      obs.forEach(o => o.computeValue())
+      inWatch = false
+    }
+  }
 
   retireFrom(obs: Observer) {
     this.observers.delete(obs)

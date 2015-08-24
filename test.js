@@ -47,25 +47,50 @@ describe('Var', function() {
     assert(mockObserver.observee === a)
   })
 
-it('should call observer when changes', function() {
-  var a = new Var(CONST1)
-  mockObserver.getCalledTimes = 0
-  mockObserver.observee = null
-  mockObserver.mockLink(a)
-  a.update(CONST2)
-  assert(a.apply() === CONST2)
-  assert(mockObserver.getCalledTimes === 1)
-})
+  it('should call observer when changes', function() {
+    var a = new Var(CONST1)
+    mockObserver.getCalledTimes = 0
+    mockObserver.observee = null
+    mockObserver.mockLink(a)
+    a.update(CONST2)
+    assert(a.apply() === CONST2)
+    assert(mockObserver.getCalledTimes === 1)
+  })
 
-it('should not call observer when no changes', function() {
-  var a = new Var(CONST1)
-  mockObserver.getCalledTimes = 0
-  mockObserver.observee = null
-  mockObserver.mockLink(a)
-  a.update(CONST1)
-  assert(a.apply() === CONST1)
-  assert(mockObserver.getCalledTimes === 0)
-})
+  it('should call observer when update ref', function() {
+    var a = new Var({a: 123})
+    mockObserver.getCalledTimes = 0
+    mockObserver.observee = null
+    mockObserver.mockLink(a)
+    a.updateRef(function(o) {
+      o.a = 456
+    })
+    assert(a.apply().a === 456)
+    assert(mockObserver.getCalledTimes === 1)
+  })
+
+  it('should not call observer when ref return true', function() {
+    var a = new Var({a: 123})
+    mockObserver.getCalledTimes = 0
+    mockObserver.observee = null
+    mockObserver.mockLink(a)
+    a.updateRef(function(o) {
+      o.a = 123
+      return true
+    })
+    assert(a.apply().a === 123)
+    assert(mockObserver.getCalledTimes === 0)
+  })
+
+  it('should not call observer when no changes', function() {
+    var a = new Var(CONST1)
+    mockObserver.getCalledTimes = 0
+    mockObserver.observee = null
+    mockObserver.mockLink(a)
+    a.update(CONST1)
+    assert(a.apply() === CONST1)
+    assert(mockObserver.getCalledTimes === 0)
+  })
 })
 
 describe('Obs', function() {
