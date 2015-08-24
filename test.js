@@ -2,9 +2,9 @@
 'use strict'
 var assert = require('assert')
 var ok = require('./ok')
-var Rx = ok.Rx
-var Obs = ok.Obs
-var Var = ok.Var
+var Rx = ok.RxImp
+var Obs = ok.ObsImp
+var Var = ok.VarImp
 var caller = ok._caller
 var mockInWatch = ok.mockInWatch
 

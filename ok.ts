@@ -24,8 +24,8 @@ class Caller<T> {
 }
 
 type _ = {}
-type Observer = Obs | Rx<_>
-type Observee = Var<_> | Rx<_>
+type Observer = ObsImp | RxImp<_>
+type Observee = VarImp<_> | RxImp<_>
 
 
 abstract class Signal<T> {
@@ -59,7 +59,7 @@ export function mockInWatch(fn: Function) {
  * and remove itself from observee's observer set.
  */
 
-export class Var<T> extends Signal<T> {
+export class VarImp<T> extends Signal<T> {
   private observers = new Set<Observer>()
   constructor(value: T) {
     super()
@@ -78,8 +78,8 @@ export class Var<T> extends Signal<T> {
   }
 
   // when Var update, all its observers should re-watch
-  update(newValue: T) {
-    if (this.value !== newValue) {
+  update(newValue: T, force?: boolean) {
+    if (this.value !== newValue || force) {
       inWatch = true
       this.value = newValue
       var obs = this.observers
@@ -104,9 +104,10 @@ export class Var<T> extends Signal<T> {
   }
 }
 
-export class Obs extends Signal<void> {
+export class ObsImp extends Signal<void> {
   private observees: Array<Observee> = []
   private expr: () => void
+  public context: any
   constructor(expr: () => void) {
     super()
     this.expr = expr
@@ -119,7 +120,9 @@ export class Obs extends Signal<void> {
       sig.retireFrom(this)
     }
     this.observees = []
-    caller.withValue(this)(this.expr)
+    caller.withValue(this)(() => {
+      return this.expr.call(this.context, this.context)
+    })
   }
   watch(child: Observee) {
     this.observees.push(child)
@@ -127,10 +130,11 @@ export class Obs extends Signal<void> {
 }
 
 const UNINTIALIZE: any = {}
-export class Rx<T> extends Signal<T> {
+export class RxImp<T> extends Signal<T> {
   private observers = new Set<Observer>()
   private observees: Array<Observee> = []
   private expr: () => T
+  public context: any
   constructor(expr: () => T) {
     super()
     this.expr = expr
@@ -141,7 +145,9 @@ export class Rx<T> extends Signal<T> {
       sig.retireFrom(this)
     }
     this.observees = []
-    let newValue = caller.withValue(this)(this.expr)
+    let newValue = caller.withValue(this)(() => {
+        return this.expr.call(this.context, this.context)
+      })
     if (this.value !== newValue) {
       this.value = newValue
       let obs = this.observers
@@ -182,3 +188,48 @@ var nilSig: any = {
 var caller = new Caller<Observer>(nilSig)
 
 export var _caller = caller
+
+// export enum UpdatePolicy {
+//   FORCE, BY_REFERENCE
+// }
+
+// interface Var<T> {
+//   (): T
+//   (t: T): void
+//   (t: T, byRef: UpdatePolicy): void
+//   (fn: (t: T) => boolean, byRef: UpdatePolicy): void
+// }
+// var funcMap = new WeakMap<Function, Signal<_>>()
+
+// export function Var<T>(initialValue: T): Var<T> {
+//   var vImp = new VarImp(initialValue)
+//   var func = (t?: any, policy?: UpdatePolicy) => {
+//     switch (policy) {
+//     case UpdatePolicy.FORCE:
+//       vImp.update(t, true)
+//       break;
+//     case UpdatePolicy.BY_REFERENCE:
+//       if (typeof t !== 'function') {
+//         throw new Error('updateRef should use function')
+//       }
+//       vImp.updateRef(t)
+//       break
+//     default:
+//       if (t === undefined)  {
+//         return vImp.apply()
+//       } else {
+//         vImp.update(t)
+//       }
+//       break
+//     }
+//   }
+//   funcMap.set(func, vImp)
+//   return func
+// }
+
+// interface Rx<T> {
+//   (): T
+// }
+// export function Rx<T, C>(fn: (c: C) => T): Rx<T> {
+//   var rxImp = new RxImp(fn)
+// }
