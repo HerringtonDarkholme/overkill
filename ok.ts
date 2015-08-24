@@ -24,8 +24,8 @@ class Caller<T> {
 }
 
 type _ = {}
-type Observer = ObsImp | RxImp<_>
-type Observee = VarImp<_> | RxImp<_>
+type Observer = ObsImp<_> | RxImp<_, _>
+type Observee = VarImp<_> | RxImp<_, _>
 
 
 abstract class Signal<T> {
@@ -104,11 +104,11 @@ export class VarImp<T> extends Signal<T> {
   }
 }
 
-export class ObsImp extends Signal<void> {
+export class ObsImp<C> extends Signal<void> {
   private observees: Array<Observee> = []
-  private expr: () => void
-  public context: any
-  constructor(expr: () => void) {
+  private expr: (ctx: C) => void
+  public context: C
+  constructor(expr: (ctx: C) => void) {
     super()
     this.expr = expr
     inWatch = true
@@ -130,12 +130,12 @@ export class ObsImp extends Signal<void> {
 }
 
 const UNINTIALIZE: any = {}
-export class RxImp<T> extends Signal<T> {
+export class RxImp<T, C> extends Signal<T> {
   private observers = new Set<Observer>()
   private observees: Array<Observee> = []
-  private expr: () => T
-  public context: any
-  constructor(expr: () => T) {
+  private expr: (ctx: C) => T
+  public context: C
+  constructor(expr: (ctx: C) => T) {
     super()
     this.expr = expr
     this.value = UNINTIALIZE
@@ -227,9 +227,16 @@ export function Var<T>(initialValue: T): Var<T> {
   return func
 }
 
-interface Rx<T> {
+interface Rx<T, C> {
   (): T
 }
-export function Rx<T, C>(fn: (c: C) => T): Rx<T> {
+export function Rx<T, C>(fn: (c: C) => T): Rx<T, C> {
   var rxImp = new RxImp(fn)
+  var func = () => rxImp.apply()
+  funcMap.set(func, rxImp)
+  return func
+}
+
+export function Obs<C>(fn: (c: C) => void): ObsImp<C> {
+  return new ObsImp(fn)
 }
