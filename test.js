@@ -175,7 +175,6 @@ describe('Obs', function() {
 })
 
 describe('Rx', function() {
-
   it('should return value', function() {
     var a = new Rx(function() {return 123})
     assert(a.apply() === 123)
@@ -269,13 +268,61 @@ describe('Rx', function() {
     })
     assert(caller.callers.length === 1)
   })
-
 })
 
-// var a = new Rx(() => b.apply())
-// var b = new Rx(() => c.apply())
-// var c = new Rx(() => a.apply())
+describe('dispose', function() {
+  it('Var should dispose itself', function() {
+    var a = new Var(4)
+    a.dispose()
+    assert(a.value === null)
+    assert(a.observers === null)
+  })
 
-// setImmediate(() => {
-//   console.log(c.apply())
-// })
+  it('Var should dispose observer', function() {
+    var a = new Var(1)
+    var b = new Obs(function() {a.apply()})
+    a.dispose(b)
+    assert(a.value === 1)
+    assert(a.observers.size === 0)
+  })
+
+  it('Var should destroy observer', function() {
+    var a = new Var(1)
+    var b = new Obs(function() {a.apply()})
+    a.dispose()
+    assert(a.value === null)
+    assert(b.observees === null)
+  })
+
+  it('Rx should destroy observer and unregister', function() {
+    var a = new Var(1)
+    var b = new Rx(function() {
+      a.apply()
+    })
+    var c = new Obs(function() {
+      b.apply()
+    })
+    assert(a.observers.size === 1)
+    assert(b.observers.size === 1)
+    assert(b.observees.length === 1)
+    assert(c.observees.length === 1)
+    b.dispose()
+    assert(a.observers.size === 0)
+    assert(b.observees === null)
+    assert(c.observees === null)
+  })
+
+  it('Obs should propaget dispose', function() {
+    var a = new Var(1)
+    var b = new Rx(function() {
+      a.apply()
+    })
+    var c = new Obs(function() {
+      b.apply()
+    })
+    c.dispose()
+    assert(c.observees === null)
+    assert(b.observers.size === 0)
+    assert(a.observers.size === 0)
+  })
+})
