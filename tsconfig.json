@@ -5,5 +5,5 @@
     "experimentalDecorators": true,
     "noImplicitAny": true
   },
-  "files": ["ok.ts"]
+  "files": ["ok.ts", "api.ts"]
 }

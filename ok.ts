@@ -28,14 +28,15 @@ type Observer = ObsImp<_> | RxImp<_, _>
 type Observee = VarImp<_> | RxImp<_, _>
 
 
-abstract class Signal<T> {
+export abstract class Signal<T> {
   protected value: T
+  abstract dispose(v?: Observer): void
 }
 
 // a flag indicates whether to track dependency
 // true when observer calls observee, otherwise false
 var inWatch = false
-export function mockInWatch(fn: Function) {
+export function execInWatch(fn: Function) {
   inWatch = true
   fn()
   inWatch = false
@@ -102,6 +103,16 @@ export class VarImp<T> extends Signal<T> {
   retireFrom(obs: Observer) {
     this.observers.delete(obs)
   }
+
+  dispose(obs?: Observer) {
+    if (obs === undefined) {
+      this.observers.forEach(o => o.dispose())
+      this.observers = null
+      this.value = null
+    } else {
+      this.observers.delete(obs)
+    }
+  }
 }
 
 export class ObsImp<C> extends Signal<void> {
@@ -126,6 +137,14 @@ export class ObsImp<C> extends Signal<void> {
   }
   watch(child: Observee) {
     this.observees.push(child)
+  }
+
+  dispose() {
+    this.observees.forEach(s => s.dispose(this))
+    this.observees = null
+    this.value = null
+    this.expr = null
+    this.context = null
   }
 }
 
@@ -180,6 +199,22 @@ export class RxImp<T, C> extends Signal<T> {
     this.observers.delete(obs)
   }
 
+  dispose(obs?: Observer) {
+    if (obs === undefined) {
+      this.observees.forEach(s => s.dispose(this))
+      this.observers.forEach(o => o.dispose())
+      this.observees = null
+      this.observers = null
+      this.value = null
+      this.expr = null
+      this.context = null
+    } else {
+      this.observers.delete(obs)
+      if (this.observers.size === 0) {
+        this.observees.forEach(o => o.retireFrom(this))
+      }
+    }
+  }
 }
 
 var nilSig: any = {
@@ -189,54 +224,3 @@ var caller = new Caller<Observer>(nilSig)
 
 export var _caller = caller
 
-export enum UpdatePolicy {
-  FORCE, BY_REFERENCE
-}
-
-interface Var<T> {
-  (): T
-  (t: T): void
-  (t: T, byRef: UpdatePolicy): void
-  (fn: (t: T) => boolean, byRef: UpdatePolicy): void
-}
-var funcMap = new WeakMap<Function, Signal<_>>()
-
-export function Var<T>(initialValue: T): Var<T> {
-  var vImp = new VarImp(initialValue)
-  var func = (t?: any, policy?: UpdatePolicy) => {
-    switch (policy) {
-    case UpdatePolicy.FORCE:
-      vImp.update(t, true)
-      break;
-    case UpdatePolicy.BY_REFERENCE:
-      if (typeof t !== 'function') {
-        throw new Error('updateRef should use function')
-      }
-      vImp.updateRef(t)
-      break
-    default:
-      if (t === undefined)  {
-        return vImp.apply()
-      } else {
-        vImp.update(t)
-      }
-      break
-    }
-  }
-  funcMap.set(func, vImp)
-  return func
-}
-
-interface Rx<T, C> {
-  (): T
-}
-export function Rx<T, C>(fn: (c: C) => T): Rx<T, C> {
-  var rxImp = new RxImp(fn)
-  var func = () => rxImp.apply()
-  funcMap.set(func, rxImp)
-  return func
-}
-
-export function Obs<C>(fn: (c: C) => void): ObsImp<C> {
-  return new ObsImp(fn)
-}

@@ -6,7 +6,7 @@ var Rx = ok.RxImp
 var Obs = ok.ObsImp
 var Var = ok.VarImp
 var caller = ok._caller
-var mockInWatch = ok.mockInWatch
+var mockInWatch = ok.execInWatch
 
 describe('Var', function() {
   var CONST1 = 42
