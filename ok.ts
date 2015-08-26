@@ -1,7 +1,7 @@
 /// <reference path='./es6-collections.d.ts' />
 import 'es6-collections'
 
-class Caller<T> {
+export class Caller<T> {
   private callers: T[] = []
   constructor(init?: T) {
     if (init !== undefined) this.callers.push(init)
@@ -23,9 +23,9 @@ class Caller<T> {
   }
 }
 
-type _ = {}
-type Observer = ObsImp<_> | RxImp<_, _>
-type Observee = VarImp<_> | RxImp<_, _>
+export type _ = {}
+export type Observer = ObsImp<_> | RxImp<_, _>
+export type Observee = VarImp<_> | RxImp<_, _>
 
 
 export abstract class Signal<T> {

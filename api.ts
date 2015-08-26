@@ -2,13 +2,13 @@
 import 'es6-collections'
 import {Signal, VarImp, RxImp, ObsImp} from './ok'
 
-type _ = {}
+export type _ = {}
 
 export enum UpdatePolicy {
   FORCE, BY_REFERENCE
 }
 
-interface Var<T> {
+export interface Var<T> {
   (): T
   (t: T): void
   (t: T, byRef: UpdatePolicy): void
@@ -42,7 +42,7 @@ export function Var<T>(initialValue: T): Var<T> {
   return func
 }
 
-interface Rx<T, C> {
+export interface Rx<T, C> {
   (): T
 }
 export function Rx<T, C>(fn: (c: C) => T): Rx<T, C> {
