@@ -313,16 +313,22 @@ describe('dispose', function() {
   })
 
   it('Obs should propaget dispose', function() {
+    var calledTimes = 0
     var a = new Var(1)
     var b = new Rx(function() {
-      a.apply()
+      return a.apply()
     })
     var c = new Obs(function() {
+      calledTimes++
       b.apply()
     })
     c.dispose()
     assert(c.observees === null)
     assert(b.observers.size === 0)
     assert(a.observers.size === 0)
+    assert(calledTimes === 1)
+    a.update(2)
+    assert(b.apply() === 2)
+    assert(calledTimes === 1)
   })
 })

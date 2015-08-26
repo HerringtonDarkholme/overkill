@@ -212,6 +212,7 @@ export class RxImp<T, C> extends Signal<T> {
       this.observers.delete(obs)
       if (this.observers.size === 0) {
         this.observees.forEach(o => o.retireFrom(this))
+        this.value = UNINTIALIZE
       }
     }
   }
