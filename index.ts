@@ -14,7 +14,7 @@ export interface Var<T> {
   (t: T, byRef: UpdatePolicy): void
   (fn: (t: T) => boolean, byRef: UpdatePolicy): void
 }
-var funcMap = new WeakMap<Function, Signal<_>>()
+var funcMap = new WeakMap<Function, Signal<_, _>>()
 
 export function Var<T>(initialValue: T): Var<T> {
   var vImp = new VarImp(initialValue)
@@ -56,7 +56,7 @@ export function Obs<C>(fn: (c: C) => void): ObsImp<C> {
   return new ObsImp(fn)
 }
 
-export function getSinalFromFunc(f: Function): Signal<_> {
+export function getSinalFromFunc(f: Function): Signal<_, _> {
   return funcMap.get(f)
 }
 

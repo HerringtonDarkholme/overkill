@@ -25,12 +25,13 @@ export class Caller<T> {
 
 export type _ = {}
 export type Observer = ObsImp<_> | RxImp<_, _>
-export type Observee = VarImp<_> | RxImp<_, _>
+export type Observee = VarImp<_, _> | RxImp<_, _>
 
 
-export abstract class Signal<T> {
+export abstract class Signal<T, C> {
   protected value: T
   abstract dispose(v?: Observer): void
+  public context: C
 }
 
 // a flag indicates whether to track dependency
@@ -60,7 +61,7 @@ export function execInWatch(fn: Function) {
  * and remove itself from observee's observer set.
  */
 
-export class VarImp<T> extends Signal<T> {
+export class VarImp<T, C> extends Signal<T, C> {
   private observers = new Set<Observer>()
   constructor(value: T) {
     super()
@@ -79,7 +80,7 @@ export class VarImp<T> extends Signal<T> {
   }
 
   // when Var update, all its observers should re-watch
-  update(newValue: T, force?: boolean) {
+  update(newValue: T, force?: boolean): C {
     if (this.value !== newValue || force) {
       inWatch = true
       this.value = newValue
@@ -88,8 +89,9 @@ export class VarImp<T> extends Signal<T> {
       obs.forEach(o => o.computeValue())
       inWatch = false
     }
+    return this.context
   }
-  updateRef(func: (t: T) => boolean|void) {
+  updateRef(func: (t: T) => boolean|void): C {
     let skipUpdate = func(this.value)
     if (skipUpdate !== true) {
       inWatch = true
@@ -98,6 +100,7 @@ export class VarImp<T> extends Signal<T> {
       obs.forEach(o => o.computeValue())
       inWatch = false
     }
+    return this.context
   }
 
   retireFrom(obs: Observer) {
@@ -115,10 +118,9 @@ export class VarImp<T> extends Signal<T> {
   }
 }
 
-export class ObsImp<C> extends Signal<void> {
+export class ObsImp<C> extends Signal<void, C> {
   private observees: Array<Observee> = []
   private expr: (ctx: C) => void
-  public context: C
   constructor(expr: (ctx: C) => void) {
     super()
     this.expr = expr
@@ -149,11 +151,10 @@ export class ObsImp<C> extends Signal<void> {
 }
 
 const UNINTIALIZE: any = {}
-export class RxImp<T, C> extends Signal<T> {
+export class RxImp<T, C> extends Signal<T, C> {
   private observers = new Set<Observer>()
   private observees: Array<Observee> = []
   private expr: (ctx: C) => T
-  public context: C
   constructor(expr: (ctx: C) => T) {
     super()
     this.expr = expr
