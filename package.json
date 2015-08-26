@@ -1,6 +1,6 @@
 {
   "name": "overkill",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "repository": {
     "type": "git",
     "url": "git@github.com:HerringtonDarkholme/overkill.git"
@@ -9,7 +9,7 @@
     "build": "node node_modules/typescript/bin/tsc",
     "watch": "node node_modules/typescript/bin/tsc --watch",
     "test": "node node_modules/mocha/bin/mocha",
-    "postinstall": "npm build"
+    "prepublish": "node node_modules/typescript/bin/tsc"
   },
   "dependencies": {
     "es6-collections": "^0.5.4",
